@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% set active_page = 'admin' %}
+{% block title %}Отчёт — админ-панель{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Загруженность фонда</h1>
+    <p class="muted">Отчёт за выбранный период по всем аудиториям.</p>
+  </div>
+</div>
+
+{% set admin_tab = 'report' %}
+{% include "_admin_tabs.html" %}
+
+<form method="get" action="/admin/report" class="card filters">
+  <label class="field field-inline">
+    <span>С</span>
+    <input type="date" name="date_from" value="{{ date_from.isoformat() }}">
+  </label>
+  <label class="field field-inline">
+    <span>По</span>
+    <input type="date" name="date_to" value="{{ date_to.isoformat() }}">
+  </label>
+  <div class="filters-actions">
+    <button type="submit" class="btn btn-primary">Построить</button>
+  </div>
+</form>
+
+<div class="stats">
+  <div class="stat card">
+    <span class="stat-label">Всего активных броней</span>
+    <span class="stat-value">{{ total_used }}</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Средняя загруженность</span>
+    <span class="stat-value">{{ average }}%</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Период</span>
+    <span class="stat-value stat-date">{{ date_from.strftime('%d.%m') }} – {{ date_to.strftime('%d.%m.%Y') }}</span>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>Аудитория</th><th>Корпус</th><th>Занято слотов</th><th>Всего слотов</th><th>Загруженность</th></tr>
+    </thead>
+    <tbody>
+      {% for item in report %}
+      <tr>
+        <td><strong>{{ item.room.number }}</strong></td>
+        <td>{{ item.room.building }}</td>
+        <td>{{ item.used }}</td>
+        <td>{{ item.total }}</td>
+        <td>
+          <div class="bar">
+            <div class="bar-fill" style="width: {{ item.percent }}%"></div>
+            <span class="bar-label">{{ item.percent }}%</span>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

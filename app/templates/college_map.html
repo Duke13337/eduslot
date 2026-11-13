@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set active_page = 'hub' %}
+{% block title %}{{ college.short_name or college.name }} — карта{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back-link" href="/hub">← Все колледжи</a>
+    <h1>{{ college.name }}</h1>
+    <p class="muted">{{ college.city }}{% if college.address %}, {{ college.address }}{% endif %} · {{ all_rooms_count }} аудиторий</p>
+  </div>
+  <a class="btn btn-primary" href="/schedule?college_id={{ college.id }}">Расписание колледжа</a>
+</div>
+
+{% if floors %}
+<div class="tabs floor-tabs">
+  {% for floor_number in floors %}
+  <a href="/college/{{ college.id }}?floor={{ floor_number }}"
+     class="{{ 'active' if floor_number == selected_floor else '' }}">{{ floor_number }} этаж</a>
+  {% endfor %}
+</div>
+
+<div class="card map-card">
+  <div class="map-head">
+    <h2>План {{ selected_floor }} этажа</h2>
+    <div class="legend">
+      <span class="legend-item"><i class="dot dot-free"></i> доступна</span>
+      <span class="legend-item"><i class="dot dot-busy"></i> есть брони сегодня</span>
+      <span class="legend-item"><i class="dot dot-repair"></i> ремонт</span>
+    </div>
+  </div>
+
+  <div class="floor-plan">
+    {% for room in rooms %}
+    <a class="map-room {{ 'map-room-repair' if room.status != 'available' else ('map-room-busy' if occupied_today.get(room.id, 0) else 'map-room-free') }}"
+       style="grid-column: {{ room.map_x }}; grid-row: {{ room.map_y }};"
+       href="/schedule?college_id={{ college.id }}&query={{ room.number }}">
+      <span class="map-room-number">{{ room.number }}</span>
+      <span class="map-room-meta">{{ room.capacity }} мест</span>
+      <span class="map-room-meta">{{ occupied_today.get(room.id, 0) }} из 7 пар занято</span>
+      <span class="map-room-status">{{ room_status_labels[room.status] }}</span>
+      <span class="map-room-equip">
+        {% for item in room.equipment_list %}<span class="chip">{{ item }}</span>{% endfor %}
+      </span>
+    </a>
+    {% else %}
+    <p class="muted">На этом этаже аудиторий нет.</p>
+    {% endfor %}
+  </div>
+  <p class="hint">Нажмите на аудиторию, чтобы открыть её расписание на сегодня.</p>
+</div>
+{% else %}
+<div class="card empty">
+  <h2>Аудитории не добавлены</h2>
+  <p class="muted">У этого колледжа пока нет помещений в системе.</p>
+</div>
+{% endif %}
+{% endblock %}

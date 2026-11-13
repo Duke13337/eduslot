@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% set active_page = 'hub' %}
+{% block title %}Колледжи — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Хаб колледжей</h1>
+    <p class="muted">Выберите учебное заведение, чтобы открыть карту корпусов и аудиторий.</p>
+  </div>
+  <a class="btn btn-ghost" href="/schedule">Всё расписание</a>
+</div>
+
+<div class="stats">
+  <div class="stat card">
+    <span class="stat-label">Колледжей</span>
+    <span class="stat-value">{{ cards|length }}</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Аудиторий всего</span>
+    <span class="stat-value">{{ total_rooms }}</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Сегодня</span>
+    <span class="stat-value stat-date">{{ today().strftime('%d.%m.%Y') }}</span>
+  </div>
+</div>
+
+<div class="cards">
+  {% for card in cards %}
+  <article class="card college-card">
+    <div class="college-head">
+      <span class="college-logo">{{ card.college.short_name or card.college.name[:2] }}</span>
+      <div>
+        <h2 class="college-name">{{ card.college.name }}</h2>
+        <p class="muted college-address">{{ card.college.city }}{% if card.college.address %}, {{ card.college.address }}{% endif %}</p>
+      </div>
+    </div>
+
+    <div class="college-stats">
+      <div><span class="college-stat-value">{{ card.rooms }}</span><span class="college-stat-label">аудиторий</span></div>
+      <div><span class="college-stat-value">{{ card.available }}</span><span class="college-stat-label">доступно</span></div>
+      <div><span class="college-stat-value">{{ card.booked_today }}</span><span class="college-stat-label">броней сегодня</span></div>
+      <div><span class="college-stat-value">{{ card.capacity }}</span><span class="college-stat-label">мест всего</span></div>
+    </div>
+
+    <div class="college-buildings">
+      {% for building in card.buildings %}<span class="chip">{{ building }}</span>{% else %}<span class="muted">корпуса не заданы</span>{% endfor %}
+    </div>
+
+    <a class="btn btn-primary btn-block" href="/college/{{ card.college.id }}">Открыть карту →</a>
+  </article>
+  {% else %}
+  <div class="card empty">
+    <h2>Колледжей пока нет</h2>
+    <p class="muted">Добавьте их в базе данных или через демо-данные.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

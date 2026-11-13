@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% set active_page = 'my' %}
+{% block title %}Мои брони — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Мои бронирования</h1>
+    <p class="muted">Активные заявки и история.</p>
+  </div>
+  <a class="btn btn-primary" href="/schedule">+ Новая бронь</a>
+</div>
+
+<h2 class="section-title">Активные</h2>
+{% if upcoming %}
+<div class="cards">
+  {% for item in upcoming %}
+  <article class="card booking-card">
+    <div class="booking-head">
+      <span class="room-number">Ауд. {{ item.room.number if item.room else '—' }}</span>
+      <span class="badge badge-active">{{ booking_status_labels[item.booking.status] }}</span>
+    </div>
+    <p class="booking-line">{{ item.booking.date.strftime('%d.%m.%Y') }} · {{ item.booking.time_slot }} пара
+      ({{ slot_by_number[item.booking.time_slot].start }}–{{ slot_by_number[item.booking.time_slot].end }})</p>
+    <p class="booking-line muted">{{ item.room.building if item.room else '' }}{% if item.room %} · {{ item.room.floor }} этаж · {{ item.room.capacity }} мест{% endif %}</p>
+    {% if item.booking.purpose %}<p class="booking-purpose">{{ item.booking.purpose }}</p>{% endif %}
+    <form method="post" action="/bookings/{{ item.booking.id }}/cancel" onsubmit="return confirm('Отменить это бронирование?');">
+      <button type="submit" class="btn btn-danger btn-small">Отменить</button>
+    </form>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card empty">
+  <h2>Активных броней нет</h2>
+  <p class="muted">Выберите свободный слот в расписании.</p>
+  <a class="btn btn-primary" href="/schedule">Перейти к расписанию</a>
+</div>
+{% endif %}
+
+<h2 class="section-title">История</h2>
+{% if history %}
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>Дата</th><th>Пара</th><th>Аудитория</th><th>Назначение</th><th>Статус</th></tr>
+    </thead>
+    <tbody>
+      {% for item in history %}
+      <tr>
+        <td>{{ item.booking.date.strftime('%d.%m.%Y') }}</td>
+        <td>{{ item.booking.time_slot }}</td>
+        <td>{{ item.room.number if item.room else '—' }}</td>
+        <td>{{ item.booking.purpose or '—' }}</td>
+        <td>
+          {% if item.booking.status == 'active' %}
+            <span class="badge badge-done">Завершена</span>
+          {% else %}
+            <span class="badge badge-cancelled">{{ booking_status_labels[item.booking.status] }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="muted">Записей пока нет.</p>
+{% endif %}
+{% endblock %}

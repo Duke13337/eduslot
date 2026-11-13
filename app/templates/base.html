@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='28' font-weight='bold' fill='white' text-anchor='middle'%3EES%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/schedule">
+      <span class="brand-mark">ES</span>
+      <span class="brand-text">
+        <strong>{{ app_name }}</strong>
+        <small>{{ app_subtitle }}</small>
+      </span>
+    </a>
+
+    {% if user %}
+    <nav class="nav">
+      <a href="/hub" class="{{ 'active' if active_page == 'hub' else '' }}">Колледжи</a>
+      <a href="/schedule" class="{{ 'active' if active_page == 'schedule' else '' }}">Расписание</a>
+      <a href="/my" class="{{ 'active' if active_page == 'my' else '' }}">Мои брони</a>
+      {% if user.is_admin %}
+      <a href="/admin/rooms" class="{{ 'active' if active_page == 'admin' else '' }}">Админ-панель</a>
+      {% endif %}
+    </nav>
+
+    <div class="user-box">
+      <div class="user-info">
+        <span class="user-name">{{ user.full_name or user.username }}</span>
+        <span class="badge role-{{ user.role }}">{{ role_labels[user.role] }}</span>
+      </div>
+      <form method="post" action="/logout">
+        <button type="submit" class="btn btn-ghost btn-small">Выйти</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</header>
+
+<main class="container main">
+  {% for message in flash_messages %}
+    <div class="flash flash-{{ message.category }}" role="status">{{ message.message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

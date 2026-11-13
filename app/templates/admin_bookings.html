@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% set active_page = 'admin' %}
+{% block title %}Все заявки — админ-панель{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Все заявки</h1>
+    <p class="muted">Модерация бронирований и контроль конфликтов.</p>
+  </div>
+</div>
+
+{% set admin_tab = 'bookings' %}
+{% include "_admin_tabs.html" %}
+
+<form method="get" action="/admin/bookings" class="card filters">
+  <label class="field field-inline">
+    <span>Дата</span>
+    <input type="date" name="date" value="{{ on_date.isoformat() if on_date else '' }}">
+  </label>
+  <label class="field field-inline">
+    <span>Статус</span>
+    <select name="status">
+      <option value="">Все</option>
+      <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Активные</option>
+      <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' else '' }}>Отменённые</option>
+    </select>
+  </label>
+  <label class="field field-inline">
+    <span>Поиск</span>
+    <input type="search" name="query" value="{{ query }}" placeholder="Номер аудитории или логин">
+  </label>
+  <div class="filters-actions">
+    <button type="submit" class="btn btn-primary">Применить</button>
+    <a class="btn btn-ghost" href="/admin/bookings">Сбросить</a>
+  </div>
+</form>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>Дата</th><th>Пара</th><th>Аудитория</th><th>Автор</th><th>Назначение</th><th>Статус</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.booking.date.strftime('%d.%m.%Y') }}</td>
+        <td>{{ item.booking.time_slot }} ({{ slot_by_number[item.booking.time_slot].start }}–{{ slot_by_number[item.booking.time_slot].end }})</td>
+        <td>{{ item.room.number if item.room else '—' }}{% if item.room %}, {{ item.room.building }}{% endif %}</td>
+        <td>{{ item.owner.full_name if item.owner else '—' }} <span class="muted">({{ item.owner.username if item.owner else '—' }})</span></td>
+        <td>{{ item.booking.purpose or '—' }}</td>
+        <td>
+          <span class="badge {{ 'badge-active' if item.booking.status == 'active' else 'badge-cancelled' }}">
+            {{ booking_status_labels[item.booking.status] }}
+          </span>
+        </td>
+        <td>
+          {% if item.booking.status == 'active' %}
+          <form method="post" action="/bookings/{{ item.booking.id }}/cancel" onsubmit="return confirm('Отменить заявку?');">
+            <button type="submit" class="btn btn-danger btn-small">Отменить</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="muted">Заявок не найдено.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% set active_page = 'admin' %}
+{% block title %}{{ 'Редактирование' if room else 'Новая аудитория' }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+{% set fd = form_data if form_data is defined and form_data else {} %}
+
+<div class="page-head">
+  <div>
+    <h1>{{ 'Редактирование аудитории ' ~ room.number if room else 'Новая аудитория' }}</h1>
+    <p class="muted">Заполните характеристики помещения.</p>
+  </div>
+  <a class="btn btn-ghost" href="/admin/rooms">← К списку</a>
+</div>
+
+{% if errors %}
+<div class="flash flash-error">
+  <ul class="error-list">
+    {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card form-card">
+  <form method="post" action="/admin/rooms/save" class="form">
+    {% if room %}<input type="hidden" name="room_id" value="{{ room.id }}">{% endif %}
+
+    <label class="field">
+      <span>Колледж *</span>
+      {% set current_college = fd.get('college_id') or (room.college_id if room else None) %}
+      <select name="college_id" required>
+        <option value="">— выберите колледж —</option>
+        {% for college in colleges %}
+        <option value="{{ college.id }}" {{ 'selected' if current_college == college.id else '' }}>{{ college.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <div class="form-row">
+      <label class="field">
+        <span>Номер аудитории *</span>
+        <input type="text" name="number" maxlength="20" required
+               value="{{ fd.get('number') or (room.number if room else '') }}" placeholder="203">
+      </label>
+      <label class="field">
+        <span>Корпус</span>
+        <select name="building">
+          {% for item in buildings %}
+          <option value="{{ item }}"
+            {{ 'selected' if (fd.get('building') or (room.building if room else 'Корпус A')) == item else '' }}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <div class="form-row">
+      <label class="field">
+        <span>Этаж</span>
+        <input type="number" name="floor" min="1" max="10" required
+               value="{{ fd.get('floor') or (room.floor if room else 1) }}">
+      </label>
+      <label class="field">
+        <span>Вместимость, мест</span>
+        <input type="number" name="capacity" min="1" max="500" required
+               value="{{ fd.get('capacity') or (room.capacity if room else 20) }}">
+      </label>
+      <label class="field">
+        <span>Статус</span>
+        <select name="status">
+          {% set current_status = fd.get('status') or (room.status if room else 'available') %}
+          <option value="available" {{ 'selected' if current_status == 'available' else '' }}>Доступна</option>
+          <option value="maintenance" {{ 'selected' if current_status == 'maintenance' else '' }}>На ремонте</option>
+        </select>
+      </label>
+    </div>
+
+    <fieldset class="field">
+      <legend>Оборудование</legend>
+      <div class="checkbox-grid">
+        {% for item in equipment_options %}
+        <label class="checkbox">
+          <input type="checkbox" name="equipment" value="{{ item }}"
+                 {{ 'checked' if item in selected_equipment else '' }}>
+          <span>{{ item }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <label class="field">
+      <span>Описание</span>
+      <textarea name="description" rows="3" maxlength="500"
+                placeholder="Например: компьютерный класс для практических занятий">{{ fd.get('description') or (room.description if room else '') }}</textarea>
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{ 'Сохранить изменения' if room else 'Создать аудиторию' }}</button>
+      <a class="btn btn-ghost" href="/admin/rooms">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

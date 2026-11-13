@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% set active_page = 'schedule' %}
+{% block title %}Расписание — {{ app_name }}{% endblock %}
+
+{% block content %}
+{% set weekdays = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'] %}
+
+<div class="page-head">
+  <div>
+    <h1>Расписание аудиторий</h1>
+    <p class="muted">Выберите свободный слот и оформите бронирование.</p>
+  </div>
+  <div class="date-nav">
+    <a class="btn btn-ghost btn-small" href="/schedule?date={{ prev_date.isoformat() }}&college_id={{ filters.college_id }}&building={{ filters.building }}&capacity={{ filters.capacity }}&equipment={{ filters.equipment }}&query={{ filters.query }}">← Назад</a>
+    <a class="btn btn-ghost btn-small" href="/schedule">Сегодня</a>
+    <a class="btn btn-ghost btn-small" href="/schedule?date={{ next_date.isoformat() }}&college_id={{ filters.college_id }}&building={{ filters.building }}&capacity={{ filters.capacity }}&equipment={{ filters.equipment }}&query={{ filters.query }}">Вперёд →</a>
+  </div>
+</div>
+
+{% if selected_college %}
+<div class="college-banner">
+  <span class="college-logo college-logo-small">{{ selected_college.short_name or selected_college.name[:2] }}</span>
+  <div>
+    <strong>{{ selected_college.name }}</strong>
+    <span class="muted">{{ selected_college.city }}{% if selected_college.address %}, {{ selected_college.address }}{% endif %}</span>
+  </div>
+  <a class="btn btn-ghost btn-small" href="/college/{{ selected_college.id }}">Карта этажей</a>
+</div>
+{% endif %}
+
+<div class="stats">
+  <div class="stat card">
+    <span class="stat-label">Дата</span>
+    <span class="stat-value stat-date">{{ on_date.strftime('%d.%m.%Y') }}</span>
+    <span class="stat-hint">{{ weekdays[on_date.weekday()] }}</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Аудиторий в подборке</span>
+    <span class="stat-value">{{ total_rooms }}</span>
+    <span class="stat-hint">после фильтрации</span>
+  </div>
+  <div class="stat card">
+    <span class="stat-label">Свободных слотов</span>
+    <span class="stat-value">{{ free_cells }}</span>
+    <span class="stat-hint">из {{ total_rooms * 7 }}</span>
+  </div>
+</div>
+
+<form method="get" action="/schedule" class="card filters">
+  <input type="hidden" name="date" value="{{ on_date.isoformat() }}">
+  <label class="field field-inline">
+    <span>Колледж</span>
+    <select name="college_id">
+      <option value="0">Все колледжи</option>
+      {% for college in colleges %}
+        <option value="{{ college.id }}" {{ 'selected' if filters.college_id == college.id else '' }}>{{ college.short_name or college.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field field-inline">
+    <span>Корпус</span>
+    <select name="building">
+      <option value="">Все корпуса</option>
+      {% for item in buildings %}
+        <option value="{{ item }}" {{ 'selected' if filters.building == item else '' }}>{{ item }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field field-inline">
+    <span>Мест не меньше</span>
+    <input type="number" name="capacity" min="0" max="500" value="{{ filters.capacity }}" placeholder="0">
+  </label>
+  <label class="field field-inline">
+    <span>Оборудование</span>
+    <select name="equipment">
+      <option value="">Любое</option>
+      {% for item in equipment_options %}
+        <option value="{{ item }}" {{ 'selected' if filters.equipment == item else '' }}>{{ item }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field field-inline">
+    <span>Поиск по номеру</span>
+    <input type="search" name="query" value="{{ filters.query }}" placeholder="Например, 203">
+  </label>
+  <div class="filters-actions">
+    <button type="submit" class="btn btn-primary">Применить</button>
+    <a class="btn btn-ghost" href="/schedule?date={{ on_date.isoformat() }}">Сбросить</a>
+  </div>
+</form>
+
+<div class="legend">
+  <span class="legend-item"><i class="dot dot-free"></i> свободно</span>
+  <span class="legend-item"><i class="dot dot-mine"></i> моя бронь</span>
+  <span class="legend-item"><i class="dot dot-busy"></i> занято</span>
+  <span class="legend-item"><i class="dot dot-repair"></i> ремонт</span>
+</div>
+
+{% if rows %}
+<div class="grid-wrap card">
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="room-col">Аудитория</th>
+        {% for slot in time_slots %}
+        <th class="slot-col">
+          <span class="slot-number">{{ slot.number }} пара</span>
+          <span class="slot-time">{{ slot.start }}–{{ slot.end }}</span>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <th class="room-col">
+          <div class="room-number">Ауд. {{ row.room.number }}</div>
+          <div class="room-meta">{{ row.room.building }} · {{ row.room.floor }} этаж · {{ row.room.capacity }} мест</div>
+          <div class="room-equip">
+            {% for item in row.room.equipment_list %}<span class="chip">{{ item }}</span>{% endfor %}
+          </div>
+        </th>
+        {% for cell in row.cells %}
+        <td class="cell cell-{{ cell.state }}">
+          {% if cell.can_book %}
+            <a class="cell-link" href="/book?room_id={{ row.room.id }}&date={{ on_date.isoformat() }}&slot={{ cell.slot.number }}">
+              <span class="cell-title">Свободно</span>
+              <span class="cell-note">Забронировать</span>
+            </a>
+          {% elif cell.state == 'busy' %}
+            <span class="cell-title">Занято</span>
+            <span class="cell-note">{{ cell.owner.full_name if cell.owner else 'Другой пользователь' }}</span>
+            {% if cell.booking and cell.booking.purpose %}<span class="cell-purpose">{{ cell.booking.purpose }}</span>{% endif %}
+          {% elif cell.state == 'mine' %}
+            <span class="cell-title">Моя бронь</span>
+            {% if cell.booking and cell.booking.purpose %}<span class="cell-purpose">{{ cell.booking.purpose }}</span>{% endif %}
+          {% else %}
+            <span class="cell-title">{{ cell.label }}</span>
+            <span class="cell-note">недоступно</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty">
+  <h2>Ничего не найдено</h2>
+  <p class="muted">Попробуйте изменить фильтры: корпус, вместимость или оборудование.</p>
+  <a class="btn btn-primary" href="/schedule?date={{ on_date.isoformat() }}">Сбросить фильтры</a>
+</div>
+{% endif %}
+{% endblock %}

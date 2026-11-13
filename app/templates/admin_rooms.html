@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set active_page = 'admin' %}
+{% block title %}Аудитории — админ-панель{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Административная панель</h1>
+    <p class="muted">Управление фондом аудиторий и заявками.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/rooms/new">+ Добавить аудиторию</a>
+</div>
+
+{% set admin_tab = 'rooms' %}
+{% include "_admin_tabs.html" %}
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Номер</th><th>Колледж</th><th>Корпус</th><th>Этаж</th><th>Мест</th><th>Оборудование</th><th>Статус</th><th>Броней</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in rooms %}
+      <tr>
+        <td><strong>{{ room.number }}</strong></td>
+        <td>{{ college_names.get(room.college_id, '—') }}</td>
+        <td>{{ room.building }}</td>
+        <td>{{ room.floor }}</td>
+        <td>{{ room.capacity }}</td>
+        <td>
+          {% for item in room.equipment_list %}<span class="chip">{{ item }}</span>{% else %}<span class="muted">—</span>{% endfor %}
+        </td>
+        <td>
+          <span class="badge {{ 'badge-active' if room.status == 'available' else 'badge-repair' }}">
+            {{ room_status_labels[room.status] }}
+          </span>
+        </td>
+        <td>{{ active_by_room.get(room.id, 0) }}</td>
+        <td class="actions">
+          <a class="btn btn-ghost btn-small" href="/admin/rooms/{{ room.id }}/edit">Изменить</a>
+          <form method="post" action="/admin/rooms/{{ room.id }}/status">
+            <input type="hidden" name="status" value="{{ 'available' if room.status == 'maintenance' else 'maintenance' }}">
+            <button type="submit" class="btn btn-ghost btn-small">
+              {{ 'Вернуть в работу' if room.status == 'maintenance' else 'На ремонт' }}
+            </button>
+          </form>
+          <form method="post" action="/admin/rooms/{{ room.id }}/delete" onsubmit="return confirm('Удалить аудиторию {{ room.number }} и все её брони?');">
+            <button type="submit" class="btn btn-danger btn-small">Удалить</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

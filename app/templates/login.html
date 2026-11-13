@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Вход — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h1 class="auth-title">Вход в систему</h1>
+    <p class="muted">Бронирование аудиторий колледжа в один клик.</p>
+
+    {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/login" class="form">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <label class="field">
+        <span>Логин</span>
+        <input type="text" name="username" value="{{ username or '' }}" required autofocus autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Пароль</span>
+        <input type="password" name="password" required autocomplete="current-password">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Войти</button>
+    </form>
+
+    <p class="auth-switch">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+
+    <div class="demo-box">
+      <div class="demo-title">Демо-аккаунты</div>
+      <ul>
+        <li><code>admin</code> / <code>admin123</code> — администратор</li>
+        <li><code>teacher</code> / <code>teacher123</code> — преподаватель</li>
+        <li><code>student</code> / <code>student123</code> — студент (только просмотр)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

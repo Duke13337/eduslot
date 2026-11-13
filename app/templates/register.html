@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <h1 class="auth-title">Регистрация</h1>
+    <p class="muted">Создайте аккаунт преподавателя или студента.</p>
+
+    {% if errors %}
+      <div class="flash flash-error">
+        <ul class="error-list">
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="post" action="/register" class="form">
+      <label class="field">
+        <span>Логин</span>
+        <input type="text" name="username" value="{{ username or '' }}" required minlength="3" maxlength="50">
+      </label>
+      <label class="field">
+        <span>ФИО</span>
+        <input type="text" name="full_name" value="{{ full_name or '' }}" maxlength="120" placeholder="Иванов Иван Иванович">
+      </label>
+      <label class="field">
+        <span>Роль</span>
+        <select name="role">
+          <option value="teacher" {{ 'selected' if role != 'student' else '' }}>Преподаватель</option>
+          <option value="student" {{ 'selected' if role == 'student' else '' }}>Студент</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Пароль</span>
+        <input type="password" name="password" required minlength="6" autocomplete="new-password">
+      </label>
+      <label class="field">
+        <span>Повторите пароль</span>
+        <input type="password" name="password_repeat" required minlength="6" autocomplete="new-password">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Создать аккаунт</button>
+    </form>
+
+    <p class="auth-switch">Уже есть аккаунт? <a href="/login">Войти</a></p>
+  </div>
+</div>
+{% endblock %}

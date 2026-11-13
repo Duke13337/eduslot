@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Ошибка — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="card empty">
+  <h1>Доступ запрещён</h1>
+  <p class="muted">{{ message }}</p>
+  <a class="btn btn-primary" href="/schedule">Вернуться к расписанию</a>
+</div>
+{% endblock %}
